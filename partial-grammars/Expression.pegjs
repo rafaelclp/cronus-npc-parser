@@ -1,3 +1,12 @@
+/*
+  Handles npc expressions.
+  e.g. in { mes "Hello world"; }, "Hello world" is an Expression.
+  e.g. in { set .@a, 5 + .@b; }, both .@a and 5 + .@b are Expressions.
+  e.g. in { set .@a, getd(.@s$); }, both .@a and get(.@s$) are Expressions.
+  Notice how the main command itself is not an expression. However:
+  e.g. in { .@a = 5; }, .@a = 5 is an Expression.
+*/
+
 {
   const constructBinaryExpression = (head, tail) => (
     tail.reduce((left, [_0, op, _1, right]) => (
@@ -5,10 +14,6 @@
     ), head)
   )
 }
-
-// -------------------------------------------------------------------------
-// Expression
-// -------------------------------------------------------------------------
 
 Expression = ConditionalExpression
 
