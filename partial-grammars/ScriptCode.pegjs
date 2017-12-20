@@ -1,6 +1,12 @@
 /*
+  Handles npc script code.
+*/
+
+/*
 @import './Expression.pegjs'
 */
+
+// ---------- ScriptCode ----------
 
 ScriptCode = _ stmts:StatementList _
     { return { type: 'StatementBlock', stmts } }

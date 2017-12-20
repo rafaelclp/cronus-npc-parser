@@ -15,6 +15,8 @@
   e.g. in { .@a = 5; }, .@a = 5 is an Expression.
 */
 
+// ---------- Expression ----------
+
 Expression = ConditionalExpression
 
 // ---------- Operations ----------
