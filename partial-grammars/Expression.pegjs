@@ -196,8 +196,9 @@ StringEscapedCharacter = "\\" !eol c:.
 StringUnescapedCharacter = !"\"" !eol c:.
     { return c }
 
-// ---------- Whitespace ----------
+// ---------- Whitespace and comments ----------
 
 _ "whitespace" = __*
-__ "whitespace character" = [ \t] / eol
+__ "whitespace character" = [ \t] / eol / comment
 eol = "\n" / "\r" !"\n" / "\r\n"
+comment = "//" (!eol .)* (!. / eol)
