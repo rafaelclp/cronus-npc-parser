@@ -128,8 +128,6 @@ FunctionCallArgList
 
 // ---------- Variable ----------
 
-//  TODO(?): reject variables whose name is a reserved word or a function
-
 Variable = name:IdentifierName indexExpr:ArrayIndex?
     { return { type: 'Variable', name, index: indexExpr } }
 
@@ -137,6 +135,8 @@ ArrayIndex = "[" _ expr:Expression _ "]"
     { return expr }
 
 // ---------- Identifier ----------
+
+//  TODO(?): reject identifiers whose name is a reserved word
 
 // NOTICE: inside expressions, identifiers can't be integers or (integer + '$').
 // For example, '37' and '37$' aren't valid identifiers. However, '37_' is. They
