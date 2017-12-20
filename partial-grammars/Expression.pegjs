@@ -201,4 +201,6 @@ StringUnescapedCharacter = !"\"" !eol c:.
 _ "whitespace" = __*
 __ "whitespace character" = [ \t] / eol / comment
 eol = "\n" / "\r" !"\n" / "\r\n"
-comment = "//" (!eol .)* (!. / eol)
+comment = singlelineComment / multilineComment
+singlelineComment = "//" (!eol .)* (!. / eol)
+multilineComment = "/*" (!"*/" .)* "*/"
