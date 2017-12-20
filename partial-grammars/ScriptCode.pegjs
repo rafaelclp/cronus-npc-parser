@@ -11,6 +11,8 @@
     Label is null in case of "default:" case.
   Constant -> name: string
     A constant like bAtk or EAJL_THIRD.
+  Function -> name: string, code: StatementBlock
+  FunctionDeclaration -> name: string
   Conditional -> cond: Expression, trueStmt: Statement, falseStmt: Statement
   Loop -> init: Statement?, cond: Expression, inc: Command?, stmt: Statement
   Command -> name: string, args: List<Expression|Label>
