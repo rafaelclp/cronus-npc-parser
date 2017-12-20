@@ -16,17 +16,17 @@
 
   == Returned types and their parameters ==
   Consider:
-    Operand = Variable|Literal|FunctionCall|<any>Expression
+    Expression = Variable|Literal|FunctionCall|<any>Expression
     AssignmentOperator = Enum<"*=","/=","%=","+=","-=","<<=",">>=","&=","^=","|=","=">
   Literal -> value: string|integer
-  Variable -> name: string, index: Operand|null
+  Variable -> name: string, index: Expression|null
     Represents both variables and labels; labels *MUST* have index === null.
-  FunctionCall -> name: string, args: List<Operand>
+  FunctionCall -> name: string, args: List<Expression>
   AssignmentExpression -> left: Variable, op:Enum<"++","--">
-  AssignmentExpression -> left: Variable, op:AssignmentOperator, right: Operand
-  UnaryExpression -> op: Enum<"!","~","-","+">, right: Operand
-  BinaryExpression -> left: Operand, op: string, right: Operand
-  ConditionalExpression -> cond: Operand, trueExpr: Operand, falseExpr: Operand
+  AssignmentExpression -> left: Variable, op:AssignmentOperator, right: Expression
+  UnaryExpression -> op: Enum<"!","~","-","+">, right: Expression
+  BinaryExpression -> left: Expression, op: string, right: Expression
+  ConditionalExpression -> cond: Expression, trueExpr: Expression, falseExpr: Expression
 */
 
 // ---------- Expression ----------
