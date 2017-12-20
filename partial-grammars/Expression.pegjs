@@ -163,7 +163,7 @@ VariableScope
   / "##" // accountPerm2
   / "#"  // accountPerm
   / "@"  // player
-// / ""   // playerPerm
+/// ""   // playerPerm
 
 VariableType
   = "$"  // string
