@@ -62,10 +62,13 @@ CaseLabel
 
 // ---------- Function ----------
 
-FunctionStatement = name:FunctionDefinition _ "{" _ code:ScriptCode _ "}"
+FunctionStatement
+  = name:FunctionDeclaration _ "{" _ code:ScriptCode _ "}"
     { return { type: 'Function', name, code } }
+  / name:FunctionDeclaration _ ";"
+    { return { type: 'FunctionDeclaration', name } }
 
-FunctionDefinition = "function"i &ReservedWordSeparator _ name:CommandIdentifierName
+FunctionDeclaration = "function"i &ReservedWordSeparator _ name:CommandIdentifierName
     { return name }
 
 // ---------- Condition ----------
