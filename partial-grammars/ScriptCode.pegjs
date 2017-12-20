@@ -111,7 +111,7 @@ CommandToArgListSeparator = "-" / "+" / "~" / "!" / "(" / "\"" / ";" / __ / Vari
 // menu "hi", -; would work, with '-' being a special label (points to next line)
 CommandArgList
   = "(" _ ")"
-  	{ return [] }
+    { return [] }
   / !("(" _ (Expression _ ",")+ _ Expression _ ")") args:CommandCallArgList
   	{ return args }
   / "(" _ args:FunctionCallArgList _ ")"
