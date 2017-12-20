@@ -1,5 +1,5 @@
 /*
-  Handles npc script code.
+  Handles npc script code. Can also be used to parse item scripts.
 */
 
 /*
