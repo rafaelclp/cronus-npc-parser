@@ -8,9 +8,14 @@
   )
 }
 
-// -------------------------------------------------------------------------
-// Expression
-// -------------------------------------------------------------------------
+/*
+  Handles npc expressions.
+  e.g. in { mes "Hello world"; }, "Hello world" is an Expression.
+  e.g. in { set .@a, 5 + .@b; }, both .@a and 5 + .@b are Expressions.
+  e.g. in { set .@a, getd(.@s$); }, both .@a and get(.@s$) are Expressions.
+  Notice how the main command itself is not an expression. However:
+  e.g. in { .@a = 5; }, .@a = 5 is an Expression.
+*/
 
 Expression = ConditionalExpression
 
@@ -66,7 +71,24 @@ MultiplicativeExpression
 UnaryExpression
   = op:("!" / "~") _ right:UnaryExpression
     { return { type: 'UnaryExpression', op, right } }
-  / UnaryAssignmentExpression
+  / ArithmeticUnaryExpression
+
+// ---------- Arithmetic negation ----------
+
+// Scripts do not have a '+' unary operator. They do accept '+3', with '+' being
+// part of the literal, but do not accept '+ 3' for example. Instead of multiple
+// '-' here with collapse them into a single '-' (odd quantity) or '+' (even).
+// We do need to keep an expression for '+' (meaning an even amount of '-') so
+// we can report an error if it is applied to a string!
+ArithmeticUnaryExpression
+  = UnaryAssignmentExpression
+  / sign:MultiNegationSign _ right:UnaryAssignmentExpression
+    { return { type: 'UnaryExpression', op: sign < 0 ? '-' : '+', right } }
+
+// Scripts accept "- - 3" for example, but not "--3". "-+3" is acceptable; "-+3"
+// just applies "-" to "+3"! Multiple "-" *MUST* be separated by whitespace(s)!
+MultiNegationSign = head:"-"? tail:(__+ "-" { return -1 })*
+    { return tail.reduce((res, sign) => res * sign, head ? -1 : 1) }
 
 // ---------- Assignment ----------
 
@@ -154,20 +176,12 @@ VariableType
 IdentifierName = s:[0-9a-zA-Z_]+
     { return s.join('') }
 
-IntegerLiteral = sign:MultiNegativeSign _ value:PositiveInteger
-    { return { type: 'Literal', value: sign * value } }
-
-// Scripts accept "- - - 3" for example, but not "---3" or "+ + + 3"
-// "-+3" and "- -+3" are acceptable; "-+3" counts as applying a single "-" to "+3"
-// Multiple "-" *MUST* be separated by whitespace(s)
-MultiNegativeSign = head:"-"? tail:(__+ "-" { return -1 })*
-    { return tail.reduce((res, sign) => res * sign, head ? -1 : 1) }
-
-PositiveInteger
+// Accepts 3, +3, but not -3. In scripts, this '-' is applied as an operator, but this '+' isn't.
+IntegerLiteral
   = ("+" / "") "0x" n:[0-9]+
-    { return parseInt(n.join(''), 16) }
+    { return { type: 'Literal', value: parseInt(n.join(''), 16) } }
   / ("+" / "") n:[0-9]+
-    { return parseInt(n.join(''), 10) }
+    { return { type: 'Literal', value: parseInt(n.join(''), 10) } }
 
 StringLiteral = "\"" s:StringCharacter* "\""
     { return { type: 'Literal', value: s.join('') } }
