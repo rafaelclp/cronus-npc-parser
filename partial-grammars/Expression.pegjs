@@ -126,30 +126,28 @@ FunctionCallArgList
   / ""
     { return [] }
 
-// ---------- Label identifier ----------
-
-// Only matched when creating labels. In functions like 'goto', we handle the label as if it was a
-// Variable, since there is no way to know what we are looking for unless we know what the function
-// expects to receive. Adding that to the grammar would come with associated unnecessary complexity.
-LabelIdentifier = ident:VarIdentifier
-    { return ident.name }
-
 // ---------- Variable ----------
 
 //  TODO(?): reject variables whose name is a reserved word or a function
 
-Variable = ident:VarIdentifier indexExpr:ArrayIndex?
-    { return { ...ident, index: indexExpr } }
+Variable = name:IdentifierName indexExpr:ArrayIndex?
+    { return { type: 'Variable', name, index: indexExpr } }
 
 ArrayIndex = "[" _ expr:Expression _ "]"
     { return expr }
 
+// ---------- Identifier ----------
+
 // Variables such as '$', '$$', '$@', '@$', '$@$', '.' are all valid...
-VarIdentifier
-  = scope:VariableScope name:IdentifierName? type:VariableType
-    { return { type: 'Identifier', name: scope + (name || '') + type } }
-  / name:IdentifierName type:VariableType
-    { return { type: 'Identifier', name: name + type } }
+// Weirdly enough, any variable name is also a valid label or function name...
+IdentifierName
+  = scope:VariableScope name:SimpleIdentifierName? type:VariableType
+    { return scope + (name || '') + type }
+  / name:SimpleIdentifierName type:VariableType
+    { return name + type }
+
+SimpleIdentifierName = s:[0-9a-zA-Z_]+
+    { return s.join('') }
 
 VariableScope
   = "$@" // global
@@ -166,10 +164,7 @@ VariableType
   = "$"  // string
   / ""   // integer
 
-// ---------- Identifier name & Literals ----------
-
-IdentifierName = s:[0-9a-zA-Z_]+
-    { return s.join('') }
+// ---------- Literals ----------
 
 // Accepts 3, +3, but not -3. In scripts, this '-' is applied as an operator, but this '+' isn't.
 IntegerLiteral
