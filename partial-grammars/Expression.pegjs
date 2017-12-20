@@ -140,16 +140,19 @@ ArrayIndex = "[" _ expr:Expression _ "]"
 
 // ---------- Identifier ----------
 
-// Still weird, just a bit less... '3' and '3$' are not allowed here.
-// In expressions, these are ALWAYS handled as integer literals (with '3$' always throwing).
-// However, '3 += 4;' is valid, but '3 += 3 += 4;' is not (since the last += is an expression).
+// NOTICE: inside expressions, identifiers can't be integers or (integer + '$').
+// For example, '37' and '37$' aren't valid identifiers. However, '37_' is. They
+// are valid for commands though. While '3 += 4' is invalid as an expression
+// e.g. in 'mes 3 += 4;', it's valid as a whole command, e.g. just '3 += 4;'.
+// Still, '3 += 4 += 5;' is invalid, since the right side, '4 += 5', is an
+// expression, not a command. That's how bad our script language is.
 IdentifierName
-  = &(!IntegerLiteral / IntegerLiteral SimpleIdentifierName) ident:WeirdIdentifierName
+  = &(!IntegerLiteral / IntegerLiteral SimpleIdentifierName) ident:CommandIdentifierName
     { return ident }
 
 // Variables such as '$', '$$', '$@', '@$', '$@$', '.', '3', '3$' are all valid...
 // Weirdly enough, any variable name is also a valid label or function name...
-WeirdIdentifierName
+CommandIdentifierName
   = scope:VariableScope name:SimpleIdentifierName? type:VariableType
     { return scope + (name || '') + type }
   / name:SimpleIdentifierName type:VariableType
