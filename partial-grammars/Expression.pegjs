@@ -13,6 +13,20 @@
   e.g. in { set .@a, getd(.@s$); }, both .@a and get(.@s$) are Expressions.
   Notice how the main command itself is not an expression. However:
   e.g. in { .@a = 5; }, .@a = 5 is an Expression.
+
+  == Returned types and their parameters ==
+  Consider:
+    Operand = Variable|Literal|FunctionCall|Expression
+    AssignmentOperator = Enum<"*=","/=","%=","+=","-=","<<=",">>=","&=","^=","|=","=">
+  Literal -> value: string|integer
+  Variable -> name: string, index: Operand|null
+    Represents both variables and labels; labels *MUST* have index === null.
+  FunctionCall -> name: string, args: List<Operand>
+  AssignmentExpression -> left: Variable, op:Enum<"++","--">
+  AssignmentExpression -> left: Variable, op:AssignmentOperator, right: Operand
+  UnaryExpression -> op: Enum<"!","~","-","+">, right: Operand
+  BinaryExpression -> left: Operand, op: string, right: Operand
+  ConditionalExpression -> cond: Operand, trueExpr: Operand, falseExpr: Operand
 */
 
 // ---------- Expression ----------
