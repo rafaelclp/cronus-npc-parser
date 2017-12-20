@@ -137,7 +137,7 @@ FunctionCall
     { return { type: 'FunctionCall', name, args } }
 
 FunctionCallArgList
-  = head:(expr:Expression _ "," { return expr })* _ tail:Expression
+  = head:(expr:Expression _ "," _ { return expr })* tail:Expression
     { return head.concat(tail) }
   / ""
     { return [] }

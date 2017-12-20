@@ -131,13 +131,13 @@ CommandToArgListSeparator = "-" / "+" / "~" / "!" / "(" / "\"" / ";" / __ / Vari
 CommandArgList
   = "(" _ ")"
     { return [] }
-  / !("(" _ (Expression _ ",")+ _ Expression _ ")") args:CommandCallArgList
+  / !("(" _ (Expression _ "," _)+ Expression _ ")") args:CommandCallArgList
   	{ return args }
   / "(" _ args:FunctionCallArgList _ ")"
     { return args }
 
 CommandCallArgList
-  = head:(arg:CommandArg _ "," { return arg })* _ tail:CommandArg
+  = head:(arg:CommandArg _ "," _ { return arg })* tail:CommandArg
     { return head.concat(tail) }
   / ""
     { return [] }
