@@ -16,7 +16,7 @@
 
   == Returned types and their parameters ==
   Consider:
-    Operand = Variable|Literal|FunctionCall|Expression
+    Operand = Variable|Literal|FunctionCall|<any>Expression
     AssignmentOperator = Enum<"*=","/=","%=","+=","-=","<<=",">>=","&=","^=","|=","=">
   Literal -> value: string|integer
   Variable -> name: string, index: Operand|null
