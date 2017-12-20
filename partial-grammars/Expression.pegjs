@@ -96,14 +96,14 @@ UnaryExpression
 // we can report an error if it is applied to a string!
 ArithmeticUnaryExpression
   = AssignmentExpression
-  / sign:MultiNegationSign _ right:AssignmentExpression
+  / sign:MultiNegationSign _ right:Operand
     { return { type: 'UnaryExpression', op: sign < 0 ? '-' : '+', right } }
   / Operand
 
 // Scripts accept "- - 3" for example, but not "--3". "-+3" is acceptable; "-+3"
 // just applies "-" to "+3"! Multiple "-" *MUST* be separated by whitespace(s)!
-MultiNegationSign = head:"-"? tail:(__+ "-" { return -1 })*
-    { return tail.reduce((res, sign) => res * sign, head ? -1 : 1) }
+MultiNegationSign = head:"-" tail:(__+ "-" { return -1 })*
+    { return tail.reduce((res, sign) => res * sign, -1) }
 
 // ---------- Assignment ----------
 

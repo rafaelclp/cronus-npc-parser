@@ -90,7 +90,7 @@ FunctionDeclaration = "function"i &ReservedWordSeparator _ name:CommandIdentifie
 IfElseStatement = ifStmt:IfStatement _ falseStmt:ElseDefinition?
     { return { ...ifStmt, falseStmt } }
 
-IfStatement = "if"i _ "(" cond:Expression _ ")" _ trueStmt:Statement
+IfStatement = "if"i _ "(" _ cond:Expression _ ")" _ trueStmt:Statement
     { return { type: 'Conditional', cond, trueStmt } }
 
 ElseDefinition = "else"i &ReservedWordSeparator _ falseStmt:Statement
