@@ -6,10 +6,48 @@
   )
 }
 
-// @ScriptCode.pegjs
-/*
-  Handles npc script code. Can also be used to parse item scripts.
-*/
+NpcFile = (_ s:Script _ { return s })*
+
+// ---------- Script ----------
+
+Script
+  = "function"i tab "script"i tab name:NpcName tab "{" _ code:ScriptCode _ "}"
+    { return { type: 'NPC:ScriptFunction', name, code } }
+  / pos:(NpcPosition / NpcNoPosition) rem tab "script"i tab name:NpcName tab w4:ScriptW4
+    { return { type: 'NPC:Script', pos, name, ...w4 }}
+
+ScriptW4
+  = sprite:Sprite trigger:("," t:Trigger { return t })? (!",{" .)* ",{" _ code:ScriptCode _ "}"
+    { return { sprite, trigger, code } }
+
+// ---------- Header utilities ----------
+
+NpcNoPosition = "-"
+    { return { map: '-' } }
+
+NpcPosition = loc:Location dir:("," f:FacingDirection { return f })?
+    { return { ...loc, dir } }
+
+NpcName = $text?
+
+Location = map:MapName "," x:MapCoordinate "," y:MapCoordinate
+    { return { map, x, y } }
+
+Trigger = x:MapCoordinate "," y:MapCoordinate
+    { return { x, y } }
+
+MapName = $nctext?
+Sprite = "-1" { return -1 } / number / $nctext?
+MapCoordinate = number / $nctext?
+FacingDirection = number / $nctext?
+
+number = n:[0-9]+
+    { return parseInt(n.join(''), 10) }
+text = $(!tab .)+
+nctext = $(!tab !"," .)+
+
+rem "remaining" = (!tab .)*
+tab = "\t"
 
 // ---------- ScriptCode ----------
 
@@ -53,7 +91,7 @@ CaseDefinition
   = "case"i __+ label:CaseLabel _ ":"
     { return { type: 'Case', label } }
   / "default"i _ ":"
-    { return { type: 'Case' } }
+    { return { type: 'Case', label: null } }
 
 CaseLabel
     = IntegerLiteral
@@ -86,7 +124,7 @@ ElseDefinition = "else"i &ReservedWordSeparator _ falseStmt:Statement
 
 ForStatement
   = "for"i _ "(" _ init:Command _ ";" _ cond:Expression _ ";" _ inc:Command _ ")" _ stmt:Statement
-    { return { type: 'Loop', init: [init], cond, inc, stmt } }
+    { return { type: 'Loop', init, cond, inc, stmt } }
 
 DoWhileStatement
   = "do"i &ReservedWordSeparator _ stmt:Statement _ cond:WhileDefinition _ ";"
@@ -113,7 +151,7 @@ Command
 CommandToArgListSeparator = "-" / "+" / "~" / "!" / "(" / "\"" / ";" / __ / VariableScope
 
 // menu("hi", -); fails, because '-' can only be used if no parentheses are used
-// menu "hi", -; would work, with '-' being a special label (points to next line)
+// menu "hi", -; would work, with '-' being a special label (points to next statement)
 CommandArgList
   = "(" _ ")"
     { return [] }
@@ -150,17 +188,6 @@ CommandVariable = name:CommandIdentifierName indexExpr:ArrayIndex?
 
 LabelDeclaration = name:CommandIdentifierName _ ":"
     { return { type: 'LabelDeclaration', name } }
-
-
-// @Expression.pegjs
-/*
-  Handles npc expressions.
-  e.g. in { mes "Hello world"; }, "Hello world" is an Expression.
-  e.g. in { set .@a, 5 + .@b; }, both .@a and 5 + .@b are Expressions.
-  e.g. in { set .@a, getd(.@s$); }, both .@a and get(.@s$) are Expressions.
-  Notice how the main command itself is not an expression. However:
-  e.g. in { .@a = 5; }, .@a = 5 is an Expression.
-*/
 
 // ---------- Expression ----------
 
@@ -348,4 +375,6 @@ StringUnescapedCharacter = !"\"" !eol c:.
 _ "whitespace" = __*
 __ "whitespace character" = [ \t] / eol / comment
 eol = "\n" / "\r" !"\n" / "\r\n"
-comment = "//" (!eol .)* (!. / eol)
+comment = singlelineComment / multilineComment
+singlelineComment = "//" (!eol .)* (!. / eol)
+multilineComment = "/*" (!"*/" .)* "*/"
