@@ -126,10 +126,7 @@ FunctionCallArgList
   / ""
     { return [] }
 
-// ---------- Label ----------
-
-LabelCreation = name:LabelIdentifier _ ":"
-    { return { type: 'Label', name } }
+// ---------- Label identifier ----------
 
 // Only matched when creating labels. In functions like 'goto', we handle the label as if it was a
 // Variable, since there is no way to know what we are looking for unless we know what the function
