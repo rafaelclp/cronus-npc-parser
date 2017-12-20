@@ -79,9 +79,10 @@ UnaryExpression
 // We do need to keep an expression for '+' (meaning an even amount of '-') so
 // we can report an error if it is applied to a string!
 ArithmeticUnaryExpression
-  = UnaryAssignmentExpression
-  / sign:MultiNegationSign _ right:UnaryAssignmentExpression
+  = AssignmentExpression
+  / sign:MultiNegationSign _ right:AssignmentExpression
     { return { type: 'UnaryExpression', op: sign < 0 ? '-' : '+', right } }
+  / Operand
 
 // Scripts accept "- - 3" for example, but not "--3". "-+3" is acceptable; "-+3"
 // just applies "-" to "+3"! Multiple "-" *MUST* be separated by whitespace(s)!
@@ -90,12 +91,14 @@ MultiNegationSign = head:"-"? tail:(__+ "-" { return -1 })*
 
 // ---------- Assignment ----------
 
-UnaryAssignmentExpression
-  = left:Variable _ op:("++" / "--")
-    { return { type: 'AssignmentExpression', left, op } }
-  / Operand
+AssignmentExpression
+  = UnaryAssignmentExpression
+  / BinaryAssignmentExpression
 
-AssignmentExpression = left:Variable _ op:AssignmentOperator _ right:Expression
+UnaryAssignmentExpression = left:Variable _ op:("++" / "--")
+    { return { type: 'AssignmentExpression', left, op } }
+
+BinaryAssignmentExpression = left:Variable _ op:AssignmentOperator _ right:Expression
     { return { type: 'AssignmentExpression', left, op, right } }
 
 AssignmentOperator
@@ -107,7 +110,6 @@ AssignmentOperator
 Operand
   = "(" _ expr:Expression _ ")"
     { return expr }
-  / AssignmentExpression
   / int:IntegerLiteral !IdentifierName
     { return int }
   / StringLiteral
@@ -138,9 +140,16 @@ ArrayIndex = "[" _ expr:Expression _ "]"
 
 // ---------- Identifier ----------
 
-// Variables such as '$', '$$', '$@', '@$', '$@$', '.' are all valid...
-// Weirdly enough, any variable name is also a valid label or function name...
+// Still weird, just a bit less... '3' and '3$' are not allowed here.
+// In expressions, these are ALWAYS handled as integer literals (with '3$' always throwing).
+// However, '3 += 4;' is valid, but '3 += 3 += 4;' is not (since the last += is an expression).
 IdentifierName
+  = &(!IntegerLiteral / IntegerLiteral SimpleIdentifierName) ident:WeirdIdentifierName
+    { return ident }
+
+// Variables such as '$', '$$', '$@', '@$', '$@$', '.', '3', '3$' are all valid...
+// Weirdly enough, any variable name is also a valid label or function name...
+WeirdIdentifierName
   = scope:VariableScope name:SimpleIdentifierName? type:VariableType
     { return scope + (name || '') + type }
   / name:SimpleIdentifierName type:VariableType
