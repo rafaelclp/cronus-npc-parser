@@ -110,7 +110,9 @@ CommandToArgListSeparator = "-" / "+" / "~" / "!" / "(" / "\"" / ";" / __ / Vari
 // menu("hi", -); fails, because '-' can only be used if no parentheses are used
 // menu "hi", -; would work, with '-' being a special label (points to next line)
 CommandArgList
-  = !("(" _ (Expression _ ",")+ _ Expression _ ")") args:CommandCallArgList
+  = "(" _ ")"
+  	{ return [] }
+  / !("(" _ (Expression _ ",")+ _ Expression _ ")") args:CommandCallArgList
   	{ return args }
   / "(" _ args:FunctionCallArgList _ ")"
     { return args }
