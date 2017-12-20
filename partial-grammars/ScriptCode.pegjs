@@ -1,5 +1,22 @@
 /*
   Handles npc script code. Can also be used to parse item scripts.
+
+  == Returned types and their parameters ==
+  Consider:
+    Statement = StatementBlock|Command|Loop|Conditional|Function|Switch|Case|LabelDeclaration
+    Refer to Expression.pegjs for other considerations
+  StatementBlock -> stmts: List<Statement>
+  Switch -> expr: Expression, stmt: StatementBlock
+  Case -> label: integer|Constant|null
+    Label is null in case of "default:" case.
+  Constant -> name: string
+    A constant like bAtk or EAJL_THIRD.
+  Conditional -> cond: Expression, trueStmt: Statement, falseStmt: Statement
+  Loop -> init: Statement?, cond: Expression, inc: Command?, stmt: Statement
+  Command -> name: string, args: List<Expression|Label>
+  Label -> name: Enum<"-">
+    Only used for cases like menu "Hi",-; where "-" is a special label
+  LabelDeclaration -> name: string
 */
 
 /*
@@ -48,7 +65,7 @@ CaseDefinition
   = "case"i __+ label:CaseLabel _ ":"
     { return { type: 'Case', label } }
   / "default"i _ ":"
-    { return { type: 'Case' } }
+    { return { type: 'Case', label: null } }
 
 CaseLabel
     = IntegerLiteral
@@ -81,7 +98,7 @@ ElseDefinition = "else"i &ReservedWordSeparator _ falseStmt:Statement
 
 ForStatement
   = "for"i _ "(" _ init:Command _ ";" _ cond:Expression _ ";" _ inc:Command _ ")" _ stmt:Statement
-    { return { type: 'Loop', init: [init], cond, inc, stmt } }
+    { return { type: 'Loop', init, cond, inc, stmt } }
 
 DoWhileStatement
   = "do"i &ReservedWordSeparator _ stmt:Statement _ cond:WhileDefinition _ ";"
@@ -108,7 +125,7 @@ Command
 CommandToArgListSeparator = "-" / "+" / "~" / "!" / "(" / "\"" / ";" / __ / VariableScope
 
 // menu("hi", -); fails, because '-' can only be used if no parentheses are used
-// menu "hi", -; would work, with '-' being a special label (points to next line)
+// menu "hi", -; would work, with '-' being a special label (points to next statement)
 CommandArgList
   = "(" _ ")"
     { return [] }
