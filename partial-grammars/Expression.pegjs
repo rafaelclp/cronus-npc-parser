@@ -59,7 +59,7 @@ ShiftExpression
     { return constructBinaryExpression(head, tail) }
 
 AdditiveExpression
-  = head:MultiplicativeExpression tail:(_ ("+" / "-") _ MultiplicativeExpression)*
+  = head:MultiplicativeExpression tail:(_ $("+" !"+" / "-") _ MultiplicativeExpression)*
     { return constructBinaryExpression(head, tail) }
 
 MultiplicativeExpression
@@ -91,9 +91,7 @@ MultiNegationSign = head:"-"? tail:(__+ "-" { return -1 })*
 
 // ---------- Assignment ----------
 
-AssignmentExpression
-  = UnaryAssignmentExpression
-  / BinaryAssignmentExpression
+AssignmentExpression = UnaryAssignmentExpression / BinaryAssignmentExpression
 
 UnaryAssignmentExpression = left:Variable _ op:("++" / "--")
     { return { type: 'AssignmentExpression', left, op } }
