@@ -24,7 +24,7 @@ Statement
   / IfElseStatement
   / FunctionStatement
   / SwitchStatement
-  / LabelCreation
+  / LabelDeclaration
   / cmd:Command? _ ";"
     { return cmd }
 
@@ -107,11 +107,24 @@ Command
 
 CommandToArgListSeparator = "-" / "+" / "~" / "!" / "(" / "\"" / ";" / __ / VariableScope
 
+// menu("hi", -); fails, because '-' can only be used if no parentheses are used
+// menu "hi", -; would work, with '-' being a special label (points to next line)
 CommandArgList
-  = !("(" _ (Expression _ ",")+ _ Expression _ ")") args:FunctionCallArgList
+  = !("(" _ (Expression _ ",")+ _ Expression _ ")") args:CommandCallArgList
   	{ return args }
   / "(" _ args:FunctionCallArgList _ ")"
     { return args }
+
+CommandCallArgList
+  = head:(arg:CommandArg _ "," { return arg })* _ tail:CommandArg
+    { return head.concat(tail) }
+  / ""
+    { return [] }
+
+CommandArg
+  = Expression
+  / "-"
+    { return { type: 'Label', name: '-' } }
 
 // ---------- AssignmentCommand ----------
 
@@ -128,5 +141,5 @@ CommandVariable = name:CommandIdentifierName indexExpr:ArrayIndex?
 
 // ---------- Label creation ----------
 
-LabelCreation = name:CommandIdentifierName _ ":"
-    { return { type: 'Label', name } }
+LabelDeclaration = name:CommandIdentifierName _ ":"
+    { return { type: 'LabelDeclaration', name } }
