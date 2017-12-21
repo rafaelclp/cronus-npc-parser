@@ -15,7 +15,7 @@ Npc
 // ---------- Temporary - not implemented yet ----------
 
 Monster = (!tab .)* tab "monster"i (!eol .)* eol
-Warp = (!tab .)* tab "warp"i (!eol .)* eol / (!tab .)* tab "warp2"i (!eol .)* eol
+Warp = (!tab .)* tab ("warp"i / "warp2"i) (!eol .)* eol
 Duplicate = (!tab .)* tab "duplicate("i (!eol .)* eol
 
 // ---------- Mapflag ----------
