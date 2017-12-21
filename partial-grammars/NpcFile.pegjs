@@ -7,82 +7,137 @@ NpcFile = (_ npc:Npc _ { return npc })*
 Npc
   = Script
   / Shop
+  / Mapflag
+  / Duplicate
+  / Warp
+  / Monster
+
+// ---------- Temporary - not implemented yet ----------
+
+Monster = (!tab .)* tab "monster"i (!eol .)* eol
+Warp = (!tab .)* tab "warp"i (!eol .)* eol / (!tab .)* tab "warp2"i (!eol .)* eol
+Duplicate = (!tab .)* tab "duplicate("i (!eol .)* eol
+
+// ---------- Mapflag ----------
+
+Mapflag = w1:MapflagW1 w2: MapflagW2 w3:MapflagW3 w4:MapflagW4
+    { return { ...w1, ...w2, ...w3, ...w4 } }
+
+MapflagW1 = map:MapNameT
+    { return { map } }
+MapflagW2 = tab "mapflag"i
+    { return { type: 'NPC', subtype: 'mapflag' } }
+MapflagW3 = tab flag:StringParamT
+    { return { flag } }
+MapflagW4 = state:(tab state:StringParam? { return state })?
+    { return { state } }
 
 // ---------- Shop ----------
 
-// TODO: accept empyt ShopItem list (as long as a comma is present)
+// TODO(lowpri): accept empty ShopItem list (as long as a comma is present)
 
 Shop
-  = pos:NpcPosition tab type:NormalShopType tab name:NpcName tab sprite:Sprite items:ShopItem+
-    { return { type: '@Shop', subtype: type, pos, name, sprite, items } }
-  / pos:NpcPosition tab "itemshop"i tab name:NpcName tab sprite:Sprite cost:ItemshopCost items:ShopItem+
-    { return { type: '@Shop', subtype: "itemshop", pos, name, sprite, cost, items } }
-  / pos:NpcPosition tab "pointshop"i tab name:NpcName tab sprite:Sprite cost:PointshopCost items:ShopItem+
-    { return { type: '@Shop', subtype: "pointshop", pos, name, sprite, cost, items }}
+  = w1:ShopW1 w2:ShopW2 w3:ShopW3 w4:ShopW4
+    { return { ...w1, ...w2, ...w3, ...w4 } }
+  / w1:ShopW1 w2:ItemshopW2 w3:ShopW3 w4:ItemshopW4
+    { return { ...w1, ...w2, ...w3, ...w4 } }
+  / w1:ShopW1 w2:PointshopW2 w3:ShopW3 w4:PointshopW4
+    { return { ...w1, ...w2, ...w3, ...w4 } }
 
-ItemshopCost = "," id:NumberParamW4 discount:ShopDiscount?
+ItemshopW2 = tab "itemshop"i
+    { return { type: 'NPC', subtype: "itemshop" } }
+ItemshopW4 = tab sprite:Sprite cost:ItemshopCost items:ShopItemList
+    { return { sprite, cost, items } }
+
+PointshopW2 = tab "pointshop"i
+    { return { type: 'NPC', subtype: "pointshop" } }
+PointshopW4 = tab sprite:Sprite cost:PointshopCost items:ShopItemList
+    { return { sprite, cost, items } }
+
+ShopW1 = pos:NpcPosition
+    { return { pos } }
+ShopW2 = tab subtype:("shop"i / "cashshop"i / "marketshop"i)
+    { return { type: 'NPC', subtype: subtype.toLowerCase() } }
+ShopW3 = tab name:NpcName
+    { return { name } }
+ShopW4 = tab sprite:Sprite items:ShopItemList
+    { return { sprite, items } }
+
+ItemshopCost = "," id:NumberParamCC discount:ShopDiscount?
     { return { id, discount } }
 
-PointshopCost = "," variable:PointshopVariable discount:ShopDiscount?
+PointshopCost = "," variable:$(!":" !"," .)+ discount:ShopDiscount?
     { return { variable, discount } }
 
-ShopDiscount = ":" d:NumberParamW4? { return d }
+ShopDiscount = ":" discount:NumberParamC
+    { return discount }
 
-PointshopVariable = $(!":" !"," .)+
+ShopItemList = items:(ShopItem+ / "," _ { return [] })
+    { return items }
 
-NormalShopType = type:("shop"i / "cashshop"i / "marketshop"i)
-    { return type.toLowerCase() }
-
-ShopItem = "," id:NumberParamW4 ":" price:NumberParamW4
+ShopItem = "," id:NumberParamCC ":" price:NumberParamC
     { return { id, price } }
 
 // ---------- Script ----------
 
 Script
-  = "function"i tab "script"i tab name:NpcName tab "{" _ code:ScriptCode _ "}"
-    { return { type: '@Script', subtype: 'function', name, code } }
-  / pos:NpcPosition tab "script"i tab name:NpcName tab w4:ScriptW4
-    { return { type: '@Script', pos, name, ...w4 }}
+  = w1:ScriptFunctionW1 w2:ScriptW2 w3:ScriptW3 w4:ScriptFunctionW4
+    { return { ...w1, ...w2, ...w3, ...w4 } }
+  / w1:ScriptW1 w2:ScriptW2 w3:ScriptW3 w4:ScriptW4
+    { return { ...w1, ...w2, ...w3, ...w4 } }
 
-ScriptW4
-  = sprite:Sprite trigger:("," t:ScriptTrigger { return t })? (!",{" .)* ",{" _ code:ScriptCode _ "}"
+ScriptFunctionW1 = "function"i
+    { return { isFunction: true } }
+ScriptFunctionW4 = tab "{" _ code:ScriptCode _ "}"
+    { return { code } }
+
+ScriptW1 = pos:NpcPosition
+    { return { pos } }
+ScriptW2 = tab "script"i
+    { return { type: 'NPC', subtype: 'script' } }
+ScriptW3 = tab name:NpcName
+    { return { name } }
+ScriptW4 = tab sprite:Sprite trigger:ScriptTrigger? code:ScriptW4Code
     { return { sprite, trigger, code } }
 
-ScriptTrigger = x:ScriptTriggerCoord "," y:ScriptTriggerCoord
+ScriptW4Code = (!",{" .)* ",{" _ code:ScriptCode _ "}"
+    { return code }
+
+ScriptTrigger = "," x:ScriptTriggerCoord "," y:ScriptTriggerCoord
     { return { x, y } }
 
-ScriptTriggerCoord = NumberParamW4_ / $(!"{" StringParamW4)
+ScriptTriggerCoord = NumberParamC / $(!"{" StringParamC)
 
 // ---------- Header utilities ----------
 
-NpcPosition = p:(NpcWithPosition / NpcNoPosition) (!tab .)*
-    { return p }
+NpcPosition = pos:(NpcWithPosition / NpcNoPosition) (!tab .)*
+    { return pos }
 
 NpcNoPosition = "-"
     { return { map: '-' } }
 
-NpcWithPosition = loc:Location dir:("," f:NumberParam { return f })?
-    { return { ...loc, dir } }
+NpcWithPosition = loc:Location facing:("," f:NumberParamCT { return f })?
+    { return { ...loc, facing } }
 
-NpcName = StringParamW3
+NpcName = StringParamT
 
-Location = map:MapName "," x:NumberParam "," y:NumberParam
+Location = map:MapNameCT "," x:NumberParamCT "," y:NumberParamCT
     { return { map, x, y } }
 
-MapName = StringParam
-MapNameW4 = StringParamW4
-Sprite = "-1" { return -1 } / NumberParamW4
+MapNameCT = StringParamCT
+MapNameC = StringParamC
+MapNameT = StringParamT
+Sprite = NumberParamC
 
-NumberParam = NumberParam_ / StringParam
-NumberParam_ = " "* n:number { return n }
-NumberParamW4 = NumberParamW4_ / StringParamW4
-NumberParamW4_ = [ \t]* n:number { return n }
+// It is better to handle numbers as strings in the headers
+NumberParamCT = StringParamCT
+NumberParamC = StringParamC
+NumberParamCC = StringParamCC
 
-StringParam = $(!tab !"," .)+
-StringParamW3 = $(!tab .)+
-StringParamW4 = $(!"," .)+
-
-number = n:[0-9]+
-    { return parseInt(n.join(''), 10) }
+StringParamCT = $(!tab !"," !eol .)+
+StringParamT = $(!tab !eol .)+
+StringParamC = $(!"," !eol .)+
+StringParamCC = $(!":" !"," !eol .)+
+StringParam = $(!eol .)+
 
 tab = "\t"
